@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4次元の模型室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0d1020;--panel:#151a30;--line:#2a3150;--ink:#eef0f8;--mute:#a4abc6;--acc:#f2c14e}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 20%,#1d2445 0%,#0d1020 70%);color:var(--ink);font:16px/1.6 "Zen Kaku Gothic New",system-ui,sans-serif;display:grid;place-items:center;padding:32px max(5vw,16px)}
+main{max-width:860px;width:100%}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin:0 0 10px;font-weight:900}
+p.lead{color:var(--mute);margin:0 0 28px;max-width:60ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;transition:border-color .2s}
+a.card:hover,a.card:focus-visible{border-color:var(--acc);outline:none}
+a.card h2{margin:0 0 6px;font-size:22px}
+a.card p{margin:0;color:var(--mute);font-size:15px}
+a.card span{display:inline-block;margin-top:14px;color:var(--acc);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1>4次元の模型室</h1>
+  <p class="lead">4D Golf に出てくる4次元の物体を、3次元の断面として眺め、予想して当てる練習で少しずつ慣れていくためのページです。</p>
+  <div class="cards">
+    <a class="card" href="model/"><h2>模型室</h2><p>超球・球柱・立方柱・双円柱・テッセラクトを、切る位置と4次元の向きを自由に変えて眺めます。</p><span>模型を見る →</span></a>
+    <a class="card" href="train/"><h2>訓練室</h2><p>断面の動きを予想して当てる練習です。3次元の準備運動から、動きを見て形を当てる逆向きまで3段階。</p><span>練習する →</span></a>
+  </div>
+</main>
+</body>
+</html>

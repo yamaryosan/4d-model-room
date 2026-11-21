@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4次元の模型室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 夜の美術館の展示室。静かで、模型が主役
+   IDEA: 4D Golf の Mezzanine（4次元アートの美術館）に置かれた台座つき模型
+   PICTURE: 3次元で切ったテッセラクトの断面（面＝切った立方体ごとに色分け）と、4次元の影の線
+   COLOUR/TYPE: 深い藍の展示室、8色の胞、Zen Kaku Gothic New
+   LAYOUT: 上に小さな題、その下に大きな模型、右（狭い画面では下）に操作盤 */
+:root{color-scheme:dark;--bg:#0d1020;--panel:#151a30;--line:#2a3150;--ink:#eef0f8;--mute:#a4abc6;--acc:#f2c14e}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(4vw,16px) 8px;max-width:1240px;margin:auto}
+h1{font-size:clamp(24px,3.4vw,36px);line-height:1.1;margin:0 0 6px;font-weight:900;text-wrap:balance}
+.lead{color:var(--mute);margin:0;max-width:70ch;font-size:15px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;max-width:1240px;margin:auto;padding:8px max(4vw,16px) 32px}
+.stage{position:sticky;top:12px;align-self:start;height:min(76vh,680px);border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#1d2445 0%,#0d1020 70%);border:1px solid var(--line)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.plate{position:absolute;left:14px;bottom:12px;background:#0d1020cc;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;pointer-events:none}
+.plate b{font-size:17px}
+.hint{position:absolute;right:14px;top:12px;font-size:13px;color:var(--mute);pointer-events:none}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:16px}
+h2{font-size:15px;margin:0 0 8px;color:var(--mute);font-weight:700}
+.row{display:grid;grid-template-columns:3.2em minmax(0,1fr) 3.6em;align-items:center;gap:8px;font-size:14px}
+.row output{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;height:32px;accent-color:var(--acc)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-size:14px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#1d2340;color:var(--ink);cursor:pointer;padding:6px 10px}
+button:hover{border-color:#4a5383}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button[aria-pressed=true]{background:var(--acc);color:#1a1405;border-color:var(--acc);font-weight:700}
+.gauge{position:relative;height:28px;border-radius:6px;background:linear-gradient(90deg,#1d2340,#2a3360,#1d2340);border:1px solid var(--line)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--acc);border-radius:2px;transform:translateX(-50%)}
+.gauge span{position:absolute;top:4px;font-size:12px;color:var(--mute)}
+.shapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}.shapes button{white-space:nowrap}
+.steps{counter-reset:s}
+.legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-size:13px}
+.legend div{display:flex;align-items:center;gap:6px}
+.legend s{width:14px;height:14px;border-radius:3px;flex:none;text-decoration:none}
+.note{font-size:14px;color:var(--mute);margin:0}
+section.more{max-width:1240px;margin:auto;padding:0 max(4vw,16px) 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+section.more div{border-top:1px solid var(--line);padding-top:12px}
+section.more h3{margin:0 0 4px;font-size:17px}
+section.more p{margin:0;color:var(--mute);font-size:15px}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}.stage{position:relative;top:0;height:58vh}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>4次元の模型室</h1>
+  <p class="lead">4D Golf と同じく、4次元の物体を「いま自分がいる3次元」で切った断面として見ています。超球から順に、W のつまみで切る位置を動かし、XW・YW・ZW で4次元の向きを回してみてください。予想して当てる練習は<a href="../train/" style="color:var(--acc)">4次元の訓練室</a>でできます。</p>
+</header>
+<main>
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="4次元の物体の3次元断面"></canvas>
+    <div class="hint">ドラッグで見回す・ホイールで拡大</div>
+    <div class="plate" id="plate">—</div>
+  </div>
+  <aside>
+    <div>
+      <h2>形（左から順に難しくなります）</h2>
+      <div class="shapes" id="shapes"></div>
+      <p class="note" id="desc" style="margin-top:10px"></p>
+    </div>
+    <div>
+      <h2>見る向き</h2>
+      <div class="btns" id="presets"></div>
+    </div>
+    <div>
+      <h2>切る位置（W）</h2>
+      <div class="row"><label for="w">W</label><input id="w" type="range" min="-1" max="1" step="0.001" value="0"><output id="wo">0.00</output></div>
+      <div class="gauge" aria-hidden="true"><span style="left:6px">物体のW下端</span><span style="right:6px">上端</span><i id="gi"></i></div>
+    </div>
+    <div>
+      <h2>4次元の回転</h2>
+      <div class="row"><label for="xw">XW</label><input id="xw" type="range" min="0" max="360" step="1" value="0"><output id="xwo">0°</output></div>
+      <div class="row"><label for="yw">YW</label><input id="yw" type="range" min="0" max="360" step="1" value="0"><output id="ywo">0°</output></div>
+      <div class="row"><label for="zw">ZW</label><input id="zw" type="range" min="0" max="360" step="1" value="0"><output id="zwo">0°</output></div>
+    </div>
+    <div class="btns">
+      <button id="sweep" aria-pressed="false">Wを通り抜けさせる</button>
+      <button id="spin" aria-pressed="false">XWで回し続ける</button>
+      <button id="ghost" aria-pressed="true">4次元の影</button>
+      <button id="reset">向きを戻す</button>
+    </div>
+    <div>
+      <h2 id="legendTitle"></h2>
+      <div class="legend" id="legend"></div>
+    </div>
+  </aside>
+</main>
+<section class="more">
+  <div><h3>1. 超球</h3><p>W を動かすと、球が点から現れて膨らみ、縮んで消えます。「4次元の物体＝3次元のアニメーション」という見方に慣れる段階です。回しても何も変わらないことも確かめてください。</p></div>
+  <div><h3>2. 球柱</h3><p>向きで振る舞いが変わる最初の形です。ふたの向きでは同じ球がずっと続き、横向きでは円柱が膨らんで縮みます。円柱を上から切るか横から切るかの違いの、1つ上の版です。</p></div>
+  <div><h3>3. 立方柱</h3><p>丸い部分と平らな部分が混ざった形です。断面のどの色が、元の形のどの部分から来たのかを追いかけてみてください。</p></div>
+  <div><h3>4. 双円柱</h3><p>4次元にしかない形です。2つの部分は平らなドーナツの面で接しています。W 方向から切ると円柱の高さだけが伸び縮みする理由を考えてみてください。</p></div>
+  <div><h3>5. テッセラクト</h3><p>「頂点から」で四面体 → 角の欠けた四面体 → 正八面体 → 四面体と変わります。立方体を角から切ると三角形 → 六角形 → 三角形になるのの1つ上の版です。</p></div>
+  <div><h3>4次元の影</h3><p>細い線は、形の骨組みを W 方向に押しつぶした投影です。いまの切る位置に近い部分ほど明るく、遠い部分ほど暗く描いています。</p></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const mul=(A,B)=>A.map((r,i)=>B[0].map((_,j)=>r.reduce((s,_,k)=>s+A[i][k]*B[k][j],0)));
+const mv=(M,v)=>M.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]+r[3]*v[3]);
+const I4=()=>[0,1,2,3].map(i=>[0,1,2,3].map(j=>i===j?1:0));
+function rot(i,j,deg){const a=deg*Math.PI/180,M=I4();M[i][i]=Math.cos(a);M[j][j]=Math.cos(a);M[i][j]=-Math.sin(a);M[j][i]=Math.sin(a);return M}
+function house(u){
+  const L=Math.hypot(...u);u=u.map(x=>x/L);
+  const v=[u[0],u[1],u[2],u[3]-1],vv=v.reduce((s,x)=>s+x*x,0);
+  if(vv<1e-12)return I4();
+  return [0,1,2,3].map(i=>[0,1,2,3].map(j=>(i===j?1:0)-2*v[i]*v[j]/vv));
+}
+function circle(f,n=48){const a=[];for(let i=0;i<=n;i++){const t=i/n*2*Math.PI;a.push(f(Math.cos(t),Math.sin(t)))}return a}
+const hyp=Math.hypot,abs=Math.abs,sqrt=Math.sqrt;
+
+const CELLS=[
+  {n:[1,0,0,0],c:'#e8705a',l:'+X'},{n:[-1,0,0,0],c:'#a8433a',l:'−X'},
+  {n:[0,1,0,0],c:'#f2c14e',l:'+Y'},{n:[0,-1,0,0],c:'#b8862a',l:'−Y'},
+  {n:[0,0,1,0],c:'#5aa9e8',l:'+Z'},{n:[0,0,-1,0],c:'#3466a8',l:'−Z'},
+  {n:[0,0,0,1],c:'#6fd0a0',l:'+W'},{n:[0,0,0,-1],c:'#3a8f6a',l:'−W'}];
+const VERTS=[];for(let i=0;i<16;i++)VERTS.push([0,1,2,3].map(k=>(i>>k&1)?1:-1));
+const EDGES=[];for(let i=0;i<16;i++)for(let k=0;k<4;k++){const j=i^(1<<k);if(j>i)EDGES.push([VERTS[i],VERTS[j]])}
+
+const SHAPES=[
+{id:'glome',name:'超球',sub:'4次元の球',
+ desc:'中心からの距離が1以内の点の集まりです。どの向きから切っても断面は球で、W を動かすと膨らんで縮むだけです。',
+ legend:'色',parts:[{c:'#5aa9e8',l:'表面（4次元の球面）'}],
+ f:(x,y,z,w)=>sqrt(x*x+y*y+z*z+w*w)-1,part:()=>0,
+ supp:d=>hyp(...d),B:1.06,
+ plate:h=>`断面：<b>${abs(h)<1?'半径 '+sqrt(1-h*h).toFixed(2)+' の球':'なし'}</b>`,
+ views:[{l:'まっすぐ',M:I4},{l:'ななめ',M:()=>mul(rot(0,3,40),rot(1,3,30))}],
+ ghost:()=>[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]].map(([i,j])=>circle((c,s)=>{const p=[0,0,0,0];p[i]=c;p[j]=s;return p}))},
+{id:'spherinder',name:'球柱',sub:'球 × 線分',
+ desc:'球を W 方向に引き伸ばした形で、円柱の1つ上の版です。ふたの向きでは同じ球がずっと続き、横向きでは円柱が膨らんで縮みます。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'側面（球面×線分）'},{c:'#f2c14e',l:'+W のふた（球）'},{c:'#6fd0a0',l:'−W のふた（球）'}],
+ f:(x,y,z,w)=>Math.max(sqrt(x*x+y*y+z*z)-1,abs(w)-1),
+ part:(x,y,z,w)=>sqrt(x*x+y*y+z*z)-1>abs(w)-1?0:(w>0?1:2),
+ supp:d=>hyp(d[0],d[1],d[2])+abs(d[3]),B:1.47,
+ views:[{l:'ふたの向き',M:I4},{l:'横向き',M:()=>rot(0,3,90)},{l:'ななめ',M:()=>rot(0,3,45)}],
+ ghost:()=>{const L=[];for(const w of[-1,1])[[0,1],[0,2],[1,2]].forEach(([i,j])=>L.push(circle((c,s)=>{const p=[0,0,0,w];p[i]=c;p[j]=s;return p})));for(let k=0;k<3;k++)for(const sg of[-1,1]){const a=[0,0,0,-1],b=[0,0,0,1];a[k]=b[k]=sg;L.push([a,b])}return L}},
+{id:'cubinder',name:'立方柱',sub:'円板 × 正方形',
+ desc:'XY は円板、ZW は正方形の形です。W 方向から切ると円柱がずっと続き、X 方向から切ると箱の幅が変わり、正方形のななめから切ると円柱の高さが伸び縮みします。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'丸い側（円周×正方形）'},{c:'#5aa9e8',l:'±Z の面（円板×線分）'},{c:'#6fd0a0',l:'±W の面（円板×線分）'}],
+ f:(x,y,z,w)=>Math.max(hyp(x,y)-1,abs(z)-1,abs(w)-1),
+ part:(x,y,z,w)=>{const a=hyp(x,y)-1,b=abs(z)-1,c=abs(w)-1;return a>=b&&a>=c?0:b>=c?1:2},
+ supp:d=>hyp(d[0],d[1])+abs(d[2])+abs(d[3]),B:1.79,
+ views:[{l:'W 方向から',M:I4},{l:'X 方向から',M:()=>rot(0,3,90)},{l:'正方形のななめ',M:()=>rot(2,3,45)}],
+ ghost:()=>{const L=[];for(const z of[-1,1])for(const w of[-1,1])L.push(circle((c,s)=>[c,s,z,w]));for(let i=0;i<8;i++){const t=i/8*2*Math.PI,x=Math.cos(t),y=Math.sin(t);L.push([[x,y,1,1],[x,y,1,-1],[x,y,-1,-1],[x,y,-1,1],[x,y,1,1]])}return L}},
+{id:'duocylinder',name:'双円柱',sub:'円板 × 円板',
+ desc:'XY も ZW も円板の、4次元にしかない形です。表面は2つの部分に分かれていて、境目は平らなドーナツ（トーラス）です。W 方向から切ると円柱の高さだけが伸び縮みします。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'XY が円周の側（円周×円板）'},{c:'#5aa9e8',l:'ZW が円周の側（円板×円周）'}],
+ f:(x,y,z,w)=>Math.max(hyp(x,y)-1,hyp(z,w)-1),
+ part:(x,y,z,w)=>hyp(x,y)>hyp(z,w)?0:1,
+ supp:d=>hyp(d[0],d[1])+hyp(d[2],d[3]),B:1.47,
+ views:[{l:'W 方向から',M:I4},{l:'XW 45°',M:()=>rot(0,3,45)},{l:'2方向にななめ',M:()=>mul(rot(0,3,45),rot(1,2,30))}],
+ ghost:()=>{const L=[];for(let i=0;i<8;i++){const t=i/8*2*Math.PI,a=Math.cos(t),b=Math.sin(t);L.push(circle((c,s)=>[c,s,a,b]));L.push(circle((c,s)=>[a,b,c,s]))}return L}},
+{id:'tesseract',name:'テッセラクト',sub:'4次元の立方体',poly:true,
+ desc:'8個の立方体でできた4次元の箱です。どこから切るかで断面の変わり方が大きく違います。「頂点から」がおすすめです。',
+ legend:'面の色＝どの立方体（胞）を切った面か',parts:CELLS,
+ supp:d=>d.reduce((s,x)=>s+abs(x),0),
+ views:[{l:'立方体から',M:()=>house([0,0,0,1])},{l:'正方形から',M:()=>house([0,0,1,1])},{l:'辺から',M:()=>house([0,1,1,1])},{l:'頂点から',M:()=>house([1,1,1,1])}],
+ ghost:()=>EDGES}
+];
+SHAPES.forEach(S=>S.lines=S.ghost());
+
+let cur=SHAPES[0],view=0,base=I4();
+const st={w:0,xw:0,yw:0,zw:0,sweep:false,spin:false,ghost:true};
+
+const cv=$('cv'),stage=$('stage');
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(38,1,0.1,100);cam.position.set(0,0.4,8);
+scene.add(new THREE.AmbientLight(0xffffff,0.45));
+const dl=new THREE.DirectionalLight(0xffffff,0.75);dl.position.set(3,5,4);scene.add(dl);
+const dl2=new THREE.DirectionalLight(0x8899ff,0.3);dl2.position.set(-4,-2,-3);scene.add(dl2);
+const grp=new THREE.Group();grp.rotation.set(0.45,-0.6,0);scene.add(grp);
+const solidMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.55,metalness:0.05,side:THREE.DoubleSide,transparent:true,opacity:0.92});
+const lineMat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.85});
+const ghostMat=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false});
+let solid=null,outline=null,ghost=null;
+const ped=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.7,0.14,64),new THREE.MeshStandardMaterial({color:0x252c4d,roughness:0.8}));
+ped.position.y=-2.75;scene.add(ped);
+
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+const ro=new ResizeObserver(resize);ro.observe(stage);
+
+function matrix(){return mul(mul(mul(rot(2,3,st.zw),rot(1,3,st.yw)),rot(0,3,st.xw)),base)}
+
+function solve3(A,b){
+  const det=m=>m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  const d=det(A);if(abs(d)<1e-9)return null;
+  return [0,1,2].map(c=>det(A.map((row,i)=>row.map((x,j)=>j===c?b[i]:x)))/d);
+}
+const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+const sub=(a,b)=>a.map((x,i)=>x-b[i]);
+
+function buildPoly(M,h){
+  const planes=[];let empty=false;
+  CELLS.forEach((c,ci)=>{const m=mv(M,c.n),a=[m[0],m[1],m[2]],d=1-m[3]*h,L=hyp(...a);
+    if(L<1e-7){if(d<-1e-7)empty=true;return}
+    planes.push({a,d,ci,nrm:a.map(x=>x/L)})});
+  const pts=[];
+  if(!empty)for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++)for(let k=j+1;k<planes.length;k++){
+    const p=solve3([planes[i].a,planes[j].a,planes[k].a],[planes[i].d,planes[j].d,planes[k].d]);
+    if(!p)continue;
+    if(planes.every(q=>q.a[0]*p[0]+q.a[1]*p[1]+q.a[2]*p[2]<=q.d+1e-6)&&!pts.some(o=>hyp(...sub(o,p))<1e-5))pts.push(p);
+  }
+  const pos=[],col=[],nor=[],lin=[],faces=[],seen=[];
+  planes.forEach(pl=>{
+    const dn=pl.d/hyp(...pl.a);
+    if(seen.some(q=>abs(q[3]-dn)<1e-6&&hyp(q[0]-pl.nrm[0],q[1]-pl.nrm[1],q[2]-pl.nrm[2])<1e-6))return;
+    seen.push([...pl.nrm,dn]);
+    let on=pts.filter(p=>abs(pl.a[0]*p[0]+pl.a[1]*p[1]+pl.a[2]*p[2]-pl.d)<1e-5);
+    if(on.length<3)return;
+    const n=pl.nrm,c=on.reduce((s,p)=>s.map((x,i)=>x+p[i]/on.length),[0,0,0]);
+    const ax=cross(n,abs(n[0])<0.9?[1,0,0]:[0,1,0]),aL=hyp(...ax),a=ax.map(x=>x/aL),b=cross(n,a);
+    const ang=p=>{const v=sub(p,c);return Math.atan2(v[0]*b[0]+v[1]*b[1]+v[2]*b[2],v[0]*a[0]+v[1]*a[1]+v[2]*a[2])};
+    on.sort((p,q)=>ang(p)-ang(q));
+    on=on.filter((p,i)=>hyp(...cross(sub(p,on[(i+on.length-1)%on.length]),sub(on[(i+1)%on.length],p)))>1e-7);
+    if(on.length<3)return;
+    let ar=0;for(let i=1;i<on.length-1;i++)ar+=hyp(...cross(sub(on[i],on[0]),sub(on[i+1],on[0])))/2;
+    if(ar<1e-10)return;
+    if(ar>2e-3)faces.push(on.length);
+    const C=new THREE.Color(CELLS[pl.ci].c);
+    for(let i=1;i<on.length-1;i++)for(const p of [on[0],on[i],on[i+1]]){pos.push(...p);col.push(C.r,C.g,C.b);nor.push(...n)}
+    for(let i=0;i<on.length;i++)lin.push(...on[i],...on[(i+1)%on.length]);
+  });
+  const sig=faces.slice().sort().join('');
+  const names={'3333':'四面体','6666':'四面体','33333333':'正八面体','33336666':'角の欠けた四面体','44444466':'六角柱','33444':'三角柱','444444':'直方体','33334444':'八面体'};
+  let nm=names[sig]||faces.length+'面体';
+  if(sig==='444444'&&view===0&&!st.xw&&!st.yw&&!st.zw)nm='立方体';
+  return {pos,col,nor,lin,plate:faces.length<4?'断面：<b>なし</b>':`断面：<b>${nm}</b>`};
+}
+
+const OFF=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+const TETS=[[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]];
+function buildImp(S,M,h,N){
+  const B=S.B,dx=2*B/N,n1=N+1,f=S.f;
+  const a0=M[0][0],a1=M[0][1],a2=M[0][2],a3=M[0][3],b0=M[1][0],b1=M[1][1],b2=M[1][2],b3=M[1][3],c0=M[2][0],c1=M[2][1],c2=M[2][2],c3=M[2][3],e0=M[3][0]*h,e1=M[3][1]*h,e2=M[3][2]*h,e3=M[3][3]*h;
+  const ev=(x,y,z)=>f(a0*x+b0*y+c0*z+e0,a1*x+b1*y+c1*z+e1,a2*x+b2*y+c2*z+e2,a3*x+b3*y+c3*z+e3);
+  const ob=(x,y,z)=>[a0*x+b0*y+c0*z+e0,a1*x+b1*y+c1*z+e1,a2*x+b2*y+c2*z+e2,a3*x+b3*y+c3*z+e3];
+  const F=new Float32Array(n1*n1*n1),id=(i,j,k)=>(i*n1+j)*n1+k;
+  for(let i=0,q=0;i<n1;i++){const x=-B+i*dx;for(let j=0;j<n1;j++){const y=-B+j*dx;for(let k=0;k<n1;k++,q++)F[q]=ev(x,y,-B+k*dx)}}
+  const pos=[],col=[],nor=[],pal=S.parts.map(p=>new THREE.Color(p.c)),part=S.part;
+  const gn=(i,j,k,m)=>{const d=[0,0,0];d[m]=1;const i1=Math.min(N,i+d[0]),j1=Math.min(N,j+d[1]),k1=Math.min(N,k+d[2]),i0=Math.max(0,i-d[0]),j0=Math.max(0,j-d[1]),k0=Math.max(0,k-d[2]);return F[id(i1,j1,k1)]-F[id(i0,j0,k0)]};
+  const P=new Array(8),V=new Array(8),G=new Array(8),inn=[],out=[];
+  const ip=(a,b)=>{const t=V[a]/(V[a]-V[b]),p=P[a],q=P[b],g=G[a],r=G[b];
+    const nx=g[0]+t*(r[0]-g[0]),ny=g[1]+t*(r[1]-g[1]),nz=g[2]+t*(r[2]-g[2]),L=hyp(nx,ny,nz)||1;
+    return [p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1]),p[2]+t*(q[2]-p[2]),nx/L,ny/L,nz/L]};
+  const put=p=>{pos.push(p[0],p[1],p[2]);nor.push(p[3],p[4],p[5]);const o=ob(p[0],p[1],p[2]),C=pal[part(o[0],o[1],o[2],o[3])];col.push(C.r,C.g,C.b)};
+  const tri=(a,b,c)=>{const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    const d=(uy*vz-uz*vy)*a[3]+(uz*vx-ux*vz)*a[4]+(ux*vy-uy*vx)*a[5];put(a);if(d<0){put(c);put(b)}else{put(b);put(c)}};
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++)for(let k=0;k<N;k++){
+    let mn=Infinity,mx=-Infinity;
+    for(let c=0;c<8;c++){const o=OFF[c],v=F[id(i+o[0],j+o[1],k+o[2])];V[c]=v;if(v<mn)mn=v;if(v>mx)mx=v}
+    if(mn>=0||mx<0)continue;
+    for(let c=0;c<8;c++){const o=OFF[c],I=i+o[0],J=j+o[1],K=k+o[2];P[c]=[-B+I*dx,-B+J*dx,-B+K*dx];G[c]=[gn(I,J,K,0),gn(I,J,K,1),gn(I,J,K,2)]}
+    for(const T of TETS){
+      inn.length=0;out.length=0;for(const t of T)(V[t]<0?inn:out).push(t);
+      if(!inn.length||!out.length)continue;
+      if(inn.length===1)tri(ip(inn[0],out[0]),ip(inn[0],out[1]),ip(inn[0],out[2]));
+      else if(inn.length===3)tri(ip(out[0],inn[0]),ip(out[0],inn[1]),ip(out[0],inn[2]));
+      else{const a=ip(inn[0],out[0]),b=ip(inn[0],out[1]),c=ip(inn[1],out[1]),d=ip(inn[1],out[0]);tri(a,b,c);tri(a,c,d)}
+    }
+  }
+  return {pos,col,nor,lin:[],plate:S.plate?S.plate(h):(pos.length?`<b>${S.name}</b>の断面`:'断面：<b>なし</b>')};
+}
+
+function build(){
+  const S=cur,M=matrix(),sp=S.supp(M[3]);
+  const t=(st.w+1)/2,h=S.poly?-sp+2*sp*(t*0.9995+0.00025):-sp+2*sp*t;
+  $('wo').value=(abs(h)<0.005?0:h).toFixed(2);
+  $('gi').style.left=(t*100)+'%';
+  const r=S.poly?buildPoly(M,h):buildImp(S,M,h,st.sweep||st.spin?38:64);
+  [solid,outline,ghost].forEach(o=>{if(o){grp.remove(o);o.geometry.dispose()}});
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(r.pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(r.col,3));
+  g.setAttribute('normal',new THREE.Float32BufferAttribute(r.nor,3));
+  solid=new THREE.Mesh(g,solidMat);grp.add(solid);
+  const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(r.lin,3));
+  outline=new THREE.LineSegments(lg,lineMat);grp.add(outline);
+  ghost=null;
+  if(st.ghost){
+    const gp=[],gc=[],span=2*sp;
+    S.lines.forEach(L=>{for(let i=0;i<L.length-1;i++)[L[i],L[i+1]].forEach(v=>{const p=mv(M,v);gp.push(p[0],p[1],p[2]);const f=Math.max(0.1,1-1.6*abs(p[3]-h)/span);gc.push(0.55*f,0.65*f,f)})});
+    const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gp,3));gg.setAttribute('color',new THREE.Float32BufferAttribute(gc,3));
+    ghost=new THREE.LineSegments(gg,ghostMat);grp.add(ghost);
+  }
+  $('plate').innerHTML=r.plate;
+}
+
+function renderShape(){
+  $('shapes').innerHTML=SHAPES.map((S,i)=>`<button data-s="${i}" aria-pressed="${S===cur}">${S.name}</button>`).join('');
+  $('desc').textContent=cur.sub+'。'+cur.desc;
+  $('presets').innerHTML=cur.views.map((v,i)=>`<button data-v="${i}" aria-pressed="${i===view}">${v.l}</button>`).join('');
+  $('legendTitle').textContent=cur.legend;
+  $('legend').style.gridTemplateColumns=cur.poly?'':'minmax(0,1fr)';
+  $('legend').innerHTML=cur.parts.map(c=>`<div><s style="background:${c.c}"></s>${c.l}</div>`).join('');
+}
+function setShape(i){cur=SHAPES[i];view=0;base=cur.views[0].M();st.xw=st.yw=st.zw=0;st.w=0;sync();renderShape();build();
+  try{history.replaceState(null,'','#'+cur.id)}catch(e){}}
+
+const sync=()=>{['xw','yw','zw'].forEach(k=>{$(k).value=st[k];$(k+'o').value=Math.round(st[k])+'°'});$('w').value=st.w};
+function toggle(k){st[k]=!st[k];$(k).setAttribute('aria-pressed',st[k])}
+$('w').addEventListener('input',e=>{st.w=+e.target.value;if(st.sweep)toggle('sweep');build()});
+['xw','yw','zw'].forEach(k=>$(k).addEventListener('input',e=>{st[k]=+e.target.value;$(k+'o').value=st[k]+'°';if(k==='xw'&&st.spin)toggle('spin');build()}));
+$('shapes').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setShape(+b.dataset.s)});
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=+b.dataset.v;base=cur.views[view].M();
+  st.xw=st.yw=st.zw=0;st.w=0;sync();renderShape();build()});
+$('sweep').addEventListener('click',()=>{toggle('sweep');if(st.sweep)phase=(st.w+1)/2});
+$('spin').addEventListener('click',()=>toggle('spin'));
+$('ghost').addEventListener('click',()=>{toggle('ghost');build()});
+$('reset').addEventListener('click',()=>{st.xw=st.yw=st.zw=0;st.w=0;grp.rotation.set(0.45,-0.6,0);sync();build()});
+
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;grp.rotation.y+=(e.clientX-drag.x)*0.01;grp.rotation.x=Math.max(-1.4,Math.min(1.4,grp.rotation.x+(e.clientY-drag.y)*0.01));drag={x:e.clientX,y:e.clientY}});
+cv.addEventListener('pointerup',()=>drag=null);cv.addEventListener('pointercancel',()=>drag=null);
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.position.z=Math.max(4,Math.min(14,cam.position.z*(1+Math.sign(e.deltaY)*0.08)))},{passive:false});
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let last=performance.now(),phase=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;let ch=false;
+  if(st.sweep){phase=(phase+dt*0.22)%1;st.w=-1+2*phase;$('w').value=st.w;ch=true}
+  if(st.spin){st.xw=(st.xw+dt*25)%360;$('xw').value=st.xw;$('xwo').value=Math.round(st.xw)+'°';ch=true}
+  if(!drag&&!reduce&&!st.sweep&&!st.spin)grp.rotation.y+=dt*0.08;
+  if(ch)build();
+  renderer.render(scene,cam);requestAnimationFrame(loop);
+}
+const start=SHAPES.findIndex(S=>'#'+S.id===location.hash);
+resize();setShape(start<0?0:start);requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

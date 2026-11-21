@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4次元の訓練室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 夜の美術館の訓練室。静かで、問いと模型が主役
+   IDEA: 4D Golf の Mezzanine（4次元アートの美術館）に置かれた台座つき模型
+   PICTURE: 3次元で切ったテッセラクトの断面（面＝切った立方体ごとに色分け）と、4次元の影の線
+   COLOUR/TYPE: 深い藍の展示室、8色の胞、Zen Kaku Gothic New
+   LAYOUT: 上に小さな題、その下に大きな模型、右（狭い画面では下）に操作盤 */
+:root{color-scheme:dark;--bg:#0d1020;--panel:#151a30;--line:#2a3150;--ink:#eef0f8;--mute:#a4abc6;--acc:#f2c14e}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(4vw,16px) 8px;max-width:1240px;margin:auto}
+h1{font-size:clamp(24px,3.4vw,36px);line-height:1.1;margin:0 0 6px;font-weight:900;text-wrap:balance}
+.lead{color:var(--mute);margin:0;max-width:70ch;font-size:15px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;max-width:1240px;margin:auto;padding:8px max(4vw,16px) 32px}
+.stage{position:sticky;top:12px;align-self:start;height:min(76vh,680px);border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#1d2445 0%,#0d1020 70%);border:1px solid var(--line)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.plate{position:absolute;left:14px;bottom:12px;background:#0d1020cc;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;pointer-events:none}
+.plate b{font-size:17px}
+.hint{position:absolute;right:14px;top:12px;font-size:13px;color:var(--mute);pointer-events:none}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:16px}
+h2{font-size:15px;margin:0 0 8px;color:var(--mute);font-weight:700}
+.row{display:grid;grid-template-columns:3.2em minmax(0,1fr) 3.6em;align-items:center;gap:8px;font-size:14px}
+.row output{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;height:32px;accent-color:var(--acc)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-size:14px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#1d2340;color:var(--ink);cursor:pointer;padding:6px 10px}
+button:hover{border-color:#4a5383}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button[aria-pressed=true]{background:var(--acc);color:#1a1405;border-color:var(--acc);font-weight:700}
+.gauge{position:relative;height:28px;border-radius:6px;background:linear-gradient(90deg,#1d2340,#2a3360,#1d2340);border:1px solid var(--line)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--acc);border-radius:2px;transform:translateX(-50%)}
+.gauge span{position:absolute;top:4px;font-size:12px;color:var(--mute)}
+.shapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}.shapes button{white-space:nowrap}
+.steps{counter-reset:s}
+.legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-size:13px}
+.legend div{display:flex;align-items:center;gap:6px}
+.legend s{width:14px;height:14px;border-radius:3px;flex:none;text-decoration:none}
+.note{font-size:14px;color:var(--mute);margin:0}
+section.more{max-width:1240px;margin:auto;padding:0 max(4vw,16px) 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+section.more div{border-top:1px solid var(--line);padding-top:12px}
+section.more h3{margin:0 0 4px;font-size:17px}
+section.more p{margin:0;color:var(--mute);font-size:15px}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}.stage{position:relative;top:0;height:58vh}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+
+[hidden]{display:none!important}
+.inset{position:absolute;right:12px;bottom:12px;width:min(42%,200px);background:#0d1020e6;border:1px solid var(--line);border-radius:10px;padding:8px}
+.stage .inset canvas{position:static;width:100%;height:auto;aspect-ratio:1;display:block;border-radius:6px;background:#111630}
+.insetT{font-size:12px;color:var(--mute);margin-bottom:4px}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tabs button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;line-height:1.3;padding:8px 10px}
+.tabs small{font-size:12px;opacity:.85}
+.prog{display:flex;justify-content:space-between;font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}
+.q{font-size:17px;font-weight:700;margin:6px 0 12px;line-height:1.5}
+.opts{display:grid;gap:8px}
+.opts button{text-align:left;padding:10px 12px;line-height:1.45}
+.opts button.right{background:#1f4a3a;border-color:#6fd0a0}
+.opts button.wrong{background:#4a2420;border-color:#e8705a}
+.opts button.dim{opacity:.55}
+.fb{margin-top:12px;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px;border:1px solid var(--line)}
+.fb b{font-size:16px}.fb.ok b{color:#6fd0a0}.fb.ng b{color:#e8705a}
+button.primary{background:var(--acc);color:#1a1405;border-color:var(--acc);font-weight:700;width:100%;margin-top:12px}
+.big{font-size:24px;font-weight:900;margin:0 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>4次元の訓練室</h1>
+  <p class="lead">予想してから答えを選び、断面の動きで答え合わせをします。1回10問で、8問正解すれば合格です。酔ったらその日は終わりにしてください。形を自由に動かしたいときは<a href="../model/" style="color:var(--acc)">4次元の模型室</a>へ。</p>
+</header>
+<main>
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="答え合わせの断面アニメーション"></canvas>
+    <div class="inset" id="insetBox"><div class="insetT">平面の住人に見えるもの</div><canvas id="slice2d" width="200" height="200"></canvas></div>
+    <div class="plate" id="plate">—</div>
+  </div>
+  <aside>
+    <div>
+      <h2>段階</h2>
+      <div class="tabs" id="tabs"></div>
+      <p class="note" id="stageNote" style="margin-top:8px"></p>
+    </div>
+    <div id="quiz">
+      <div class="prog"><span id="prog"></span><span id="score"></span></div>
+      <p class="q" id="prompt"></p>
+      <div class="opts" id="opts"></div>
+      <div class="fb" id="fb" hidden></div>
+      <button id="next" class="primary" hidden>次の問題</button>
+    </div>
+    <div id="result" hidden>
+      <p class="big" id="resTitle"></p>
+      <p class="note" id="resBody"></p>
+      <div class="btns"><button id="again">もう一度</button><button id="nextStage" class="primary">次の段階へ</button></div>
+    </div>
+  </aside>
+</main>
+<section class="more">
+  <div><h3>段階0：3次元で準備運動</h3><p>立体を平面で切ったとき、切り口がどう動くかを予想します。頭の中で答え合わせできる次元で、「断面の動き ↔ 元の形」の対応に慣れます。</p></div>
+  <div><h3>段階1：4次元の断面を予想</h3><p>超球・球柱・立方柱・双円柱・テッセラクトを、決まった向きで切ったときの断面の動きを選びます。「線分の側を切ると同じものが続く、丸い側を切ると太さが変わる」で解けます。</p></div>
+  <div><h3>段階2：動きから形を当てる</h3><p>色を消した断面の動きだけを見て、どの形をどの向きで切ったのかを当てます。ストットが断面の模型から4次元の形を組み立てていたのと同じ向きの練習です。</p></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+{
+
+const $=id=>document.getElementById(id);
+const mul=(A,B)=>A.map((r,i)=>B[0].map((_,j)=>r.reduce((s,_,k)=>s+A[i][k]*B[k][j],0)));
+const mv=(M,v)=>M.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]+r[3]*v[3]);
+const I4=()=>[0,1,2,3].map(i=>[0,1,2,3].map(j=>i===j?1:0));
+function rot(i,j,deg){const a=deg*Math.PI/180,M=I4();M[i][i]=Math.cos(a);M[j][j]=Math.cos(a);M[i][j]=-Math.sin(a);M[j][i]=Math.sin(a);return M}
+function house(u){
+  const L=Math.hypot(...u);u=u.map(x=>x/L);
+  const v=[u[0],u[1],u[2],u[3]-1],vv=v.reduce((s,x)=>s+x*x,0);
+  if(vv<1e-12)return I4();
+  return [0,1,2,3].map(i=>[0,1,2,3].map(j=>(i===j?1:0)-2*v[i]*v[j]/vv));
+}
+function circle(f,n=48){const a=[];for(let i=0;i<=n;i++){const t=i/n*2*Math.PI;a.push(f(Math.cos(t),Math.sin(t)))}return a}
+const hyp=Math.hypot,abs=Math.abs,sqrt=Math.sqrt;
+
+const CELLS=[
+  {n:[1,0,0,0],c:'#e8705a',l:'+X'},{n:[-1,0,0,0],c:'#a8433a',l:'−X'},
+  {n:[0,1,0,0],c:'#f2c14e',l:'+Y'},{n:[0,-1,0,0],c:'#b8862a',l:'−Y'},
+  {n:[0,0,1,0],c:'#5aa9e8',l:'+Z'},{n:[0,0,-1,0],c:'#3466a8',l:'−Z'},
+  {n:[0,0,0,1],c:'#6fd0a0',l:'+W'},{n:[0,0,0,-1],c:'#3a8f6a',l:'−W'}];
+const VERTS=[];for(let i=0;i<16;i++)VERTS.push([0,1,2,3].map(k=>(i>>k&1)?1:-1));
+const EDGES=[];for(let i=0;i<16;i++)for(let k=0;k<4;k++){const j=i^(1<<k);if(j>i)EDGES.push([VERTS[i],VERTS[j]])}
+
+const SHAPES=[
+{id:'glome',name:'超球',sub:'4次元の球',
+ desc:'中心からの距離が1以内の点の集まりです。どの向きから切っても断面は球で、W を動かすと膨らんで縮むだけです。',
+ legend:'色',parts:[{c:'#5aa9e8',l:'表面（4次元の球面）'}],
+ f:(x,y,z,w)=>sqrt(x*x+y*y+z*z+w*w)-1,part:()=>0,
+ supp:d=>hyp(...d),B:1.06,
+ plate:h=>`断面：<b>${abs(h)<1?'半径 '+sqrt(1-h*h).toFixed(2)+' の球':'なし'}</b>`,
+ views:[{l:'まっすぐ',M:I4},{l:'ななめ',M:()=>mul(rot(0,3,40),rot(1,3,30))}],
+ ghost:()=>[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]].map(([i,j])=>circle((c,s)=>{const p=[0,0,0,0];p[i]=c;p[j]=s;return p}))},
+{id:'spherinder',name:'球柱',sub:'球 × 線分',
+ desc:'球を W 方向に引き伸ばした形で、円柱の1つ上の版です。ふたの向きでは同じ球がずっと続き、横向きでは円柱が膨らんで縮みます。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'側面（球面×線分）'},{c:'#f2c14e',l:'+W のふた（球）'},{c:'#6fd0a0',l:'−W のふた（球）'}],
+ f:(x,y,z,w)=>Math.max(sqrt(x*x+y*y+z*z)-1,abs(w)-1),
+ part:(x,y,z,w)=>sqrt(x*x+y*y+z*z)-1>abs(w)-1?0:(w>0?1:2),
+ supp:d=>hyp(d[0],d[1],d[2])+abs(d[3]),B:1.47,
+ views:[{l:'ふたの向き',M:I4},{l:'横向き',M:()=>rot(0,3,90)},{l:'ななめ',M:()=>rot(0,3,45)}],
+ ghost:()=>{const L=[];for(const w of[-1,1])[[0,1],[0,2],[1,2]].forEach(([i,j])=>L.push(circle((c,s)=>{const p=[0,0,0,w];p[i]=c;p[j]=s;return p})));for(let k=0;k<3;k++)for(const sg of[-1,1]){const a=[0,0,0,-1],b=[0,0,0,1];a[k]=b[k]=sg;L.push([a,b])}return L}},
+{id:'cubinder',name:'立方柱',sub:'円板 × 正方形',
+ desc:'XY は円板、ZW は正方形の形です。W 方向から切ると円柱がずっと続き、X 方向から切ると箱の幅が変わり、正方形のななめから切ると円柱の高さが伸び縮みします。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'丸い側（円周×正方形）'},{c:'#5aa9e8',l:'±Z の面（円板×線分）'},{c:'#6fd0a0',l:'±W の面（円板×線分）'}],
+ f:(x,y,z,w)=>Math.max(hyp(x,y)-1,abs(z)-1,abs(w)-1),
+ part:(x,y,z,w)=>{const a=hyp(x,y)-1,b=abs(z)-1,c=abs(w)-1;return a>=b&&a>=c?0:b>=c?1:2},
+ supp:d=>hyp(d[0],d[1])+abs(d[2])+abs(d[3]),B:1.79,
+ views:[{l:'W 方向から',M:I4},{l:'X 方向から',M:()=>rot(0,3,90)},{l:'正方形のななめ',M:()=>rot(2,3,45)}],
+ ghost:()=>{const L=[];for(const z of[-1,1])for(const w of[-1,1])L.push(circle((c,s)=>[c,s,z,w]));for(let i=0;i<8;i++){const t=i/8*2*Math.PI,x=Math.cos(t),y=Math.sin(t);L.push([[x,y,1,1],[x,y,1,-1],[x,y,-1,-1],[x,y,-1,1],[x,y,1,1]])}return L}},
+{id:'duocylinder',name:'双円柱',sub:'円板 × 円板',
+ desc:'XY も ZW も円板の、4次元にしかない形です。表面は2つの部分に分かれていて、境目は平らなドーナツ（トーラス）です。W 方向から切ると円柱の高さだけが伸び縮みします。',
+ legend:'色＝表面のどの部分を切ったか',parts:[{c:'#e8705a',l:'XY が円周の側（円周×円板）'},{c:'#5aa9e8',l:'ZW が円周の側（円板×円周）'}],
+ f:(x,y,z,w)=>Math.max(hyp(x,y)-1,hyp(z,w)-1),
+ part:(x,y,z,w)=>hyp(x,y)>hyp(z,w)?0:1,
+ supp:d=>hyp(d[0],d[1])+hyp(d[2],d[3]),B:1.47,
+ views:[{l:'W 方向から',M:I4},{l:'XW 45°',M:()=>rot(0,3,45)},{l:'2方向にななめ',M:()=>mul(rot(0,3,45),rot(1,2,30))}],
+ ghost:()=>{const L=[];for(let i=0;i<8;i++){const t=i/8*2*Math.PI,a=Math.cos(t),b=Math.sin(t);L.push(circle((c,s)=>[c,s,a,b]));L.push(circle((c,s)=>[a,b,c,s]))}return L}},
+{id:'tesseract',name:'テッセラクト',sub:'4次元の立方体',poly:true,
+ desc:'8個の立方体でできた4次元の箱です。どこから切るかで断面の変わり方が大きく違います。「頂点から」がおすすめです。',
+ legend:'面の色＝どの立方体（胞）を切った面か',parts:CELLS,
+ supp:d=>d.reduce((s,x)=>s+abs(x),0),
+ views:[{l:'立方体から',M:()=>house([0,0,0,1])},{l:'正方形から',M:()=>house([0,0,1,1])},{l:'辺から',M:()=>house([0,1,1,1])},{l:'頂点から',M:()=>house([1,1,1,1])}],
+ ghost:()=>EDGES}
+];
+SHAPES.forEach(S=>S.lines=S.ghost());
+
+let cur=SHAPES[0],view=0,base=I4();
+const st={w:0,xw:0,yw:0,zw:0,sweep:false,spin:false,ghost:true};
+
+const cv=$('cv'),stage=$('stage');
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(38,1,0.1,100);cam.position.set(0,0.4,8);
+scene.add(new THREE.AmbientLight(0xffffff,0.45));
+const dl=new THREE.DirectionalLight(0xffffff,0.75);dl.position.set(3,5,4);scene.add(dl);
+const dl2=new THREE.DirectionalLight(0x8899ff,0.3);dl2.position.set(-4,-2,-3);scene.add(dl2);
+const grp=new THREE.Group();grp.rotation.set(0.45,-0.6,0);scene.add(grp);
+const solidMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.55,metalness:0.05,side:THREE.DoubleSide,transparent:true,opacity:0.92});
+const lineMat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.85});
+const ghostMat=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false});
+let solid=null,outline=null,ghost=null;
+const ped=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.7,0.14,64),new THREE.MeshStandardMaterial({color:0x252c4d,roughness:0.8}));
+ped.position.y=-2.75;scene.add(ped);
+
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+const ro=new ResizeObserver(resize);ro.observe(stage);
+
+function matrix(){return mul(mul(mul(rot(2,3,st.zw),rot(1,3,st.yw)),rot(0,3,st.xw)),base)}
+
+function solve3(A,b){
+  const det=m=>m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  const d=det(A);if(abs(d)<1e-9)return null;
+  return [0,1,2].map(c=>det(A.map((row,i)=>row.map((x,j)=>j===c?b[i]:x)))/d);
+}
+const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+const sub=(a,b)=>a.map((x,i)=>x-b[i]);
+
+function buildPoly(M,h){
+  const planes=[];let empty=false;
+  CELLS.forEach((c,ci)=>{const m=mv(M,c.n),a=[m[0],m[1],m[2]],d=1-m[3]*h,L=hyp(...a);
+    if(L<1e-7){if(d<-1e-7)empty=true;return}
+    planes.push({a,d,ci,nrm:a.map(x=>x/L)})});
+  const pts=[];
+  if(!empty)for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++)for(let k=j+1;k<planes.length;k++){
+    const p=solve3([planes[i].a,planes[j].a,planes[k].a],[planes[i].d,planes[j].d,planes[k].d]);
+    if(!p)continue;
+    if(planes.every(q=>q.a[0]*p[0]+q.a[1]*p[1]+q.a[2]*p[2]<=q.d+1e-6)&&!pts.some(o=>hyp(...sub(o,p))<1e-5))pts.push(p);
+  }
+  const pos=[],col=[],nor=[],lin=[],faces=[],seen=[];
+  planes.forEach(pl=>{
+    const dn=pl.d/hyp(...pl.a);
+    if(seen.some(q=>abs(q[3]-dn)<1e-6&&hyp(q[0]-pl.nrm[0],q[1]-pl.nrm[1],q[2]-pl.nrm[2])<1e-6))return;
+    seen.push([...pl.nrm,dn]);
+    let on=pts.filter(p=>abs(pl.a[0]*p[0]+pl.a[1]*p[1]+pl.a[2]*p[2]-pl.d)<1e-5);
+    if(on.length<3)return;
+    const n=pl.nrm,c=on.reduce((s,p)=>s.map((x,i)=>x+p[i]/on.length),[0,0,0]);
+    const ax=cross(n,abs(n[0])<0.9?[1,0,0]:[0,1,0]),aL=hyp(...ax),a=ax.map(x=>x/aL),b=cross(n,a);
+    const ang=p=>{const v=sub(p,c);return Math.atan2(v[0]*b[0]+v[1]*b[1]+v[2]*b[2],v[0]*a[0]+v[1]*a[1]+v[2]*a[2])};
+    on.sort((p,q)=>ang(p)-ang(q));
+    on=on.filter((p,i)=>hyp(...cross(sub(p,on[(i+on.length-1)%on.length]),sub(on[(i+1)%on.length],p)))>1e-7);
+    if(on.length<3)return;
+    let ar=0;for(let i=1;i<on.length-1;i++)ar+=hyp(...cross(sub(on[i],on[0]),sub(on[i+1],on[0])))/2;
+    if(ar<1e-10)return;
+    if(ar>2e-3)faces.push(on.length);
+    const C=new THREE.Color(CELLS[pl.ci].c);
+    for(let i=1;i<on.length-1;i++)for(const p of [on[0],on[i],on[i+1]]){pos.push(...p);col.push(C.r,C.g,C.b);nor.push(...n)}
+    for(let i=0;i<on.length;i++)lin.push(...on[i],...on[(i+1)%on.length]);
+  });
+  const sig=faces.slice().sort().join('');
+  const names={'3333':'四面体','6666':'四面体','33333333':'正八面体','33336666':'角の欠けた四面体','44444466':'六角柱','33444':'三角柱','444444':'直方体','33334444':'八面体'};
+  let nm=names[sig]||faces.length+'面体';
+  if(sig==='444444'&&view===0&&!st.xw&&!st.yw&&!st.zw)nm='立方体';
+  return {pos,col,nor,lin,plate:faces.length<4?'断面：<b>なし</b>':`断面：<b>${nm}</b>`};
+}
+
+const OFF=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+const TETS=[[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]];
+function buildImp(S,M,h,N){
+  const B=S.B,dx=2*B/N,n1=N+1,f=S.f;
+  const a0=M[0][0],a1=M[0][1],a2=M[0][2],a3=M[0][3],b0=M[1][0],b1=M[1][1],b2=M[1][2],b3=M[1][3],c0=M[2][0],c1=M[2][1],c2=M[2][2],c3=M[2][3],e0=M[3][0]*h,e1=M[3][1]*h,e2=M[3][2]*h,e3=M[3][3]*h;
+  const ev=(x,y,z)=>f(a0*x+b0*y+c0*z+e0,a1*x+b1*y+c1*z+e1,a2*x+b2*y+c2*z+e2,a3*x+b3*y+c3*z+e3);
+  const ob=(x,y,z)=>[a0*x+b0*y+c0*z+e0,a1*x+b1*y+c1*z+e1,a2*x+b2*y+c2*z+e2,a3*x+b3*y+c3*z+e3];
+  const F=new Float32Array(n1*n1*n1),id=(i,j,k)=>(i*n1+j)*n1+k;
+  for(let i=0,q=0;i<n1;i++){const x=-B+i*dx;for(let j=0;j<n1;j++){const y=-B+j*dx;for(let k=0;k<n1;k++,q++)F[q]=ev(x,y,-B+k*dx)}}
+  const pos=[],col=[],nor=[],pal=S.parts.map(p=>new THREE.Color(p.c)),part=S.part;
+  const gn=(i,j,k,m)=>{const d=[0,0,0];d[m]=1;const i1=Math.min(N,i+d[0]),j1=Math.min(N,j+d[1]),k1=Math.min(N,k+d[2]),i0=Math.max(0,i-d[0]),j0=Math.max(0,j-d[1]),k0=Math.max(0,k-d[2]);return F[id(i1,j1,k1)]-F[id(i0,j0,k0)]};
+  const P=new Array(8),V=new Array(8),G=new Array(8),inn=[],out=[];
+  const ip=(a,b)=>{const t=V[a]/(V[a]-V[b]),p=P[a],q=P[b],g=G[a],r=G[b];
+    const nx=g[0]+t*(r[0]-g[0]),ny=g[1]+t*(r[1]-g[1]),nz=g[2]+t*(r[2]-g[2]),L=hyp(nx,ny,nz)||1;
+    return [p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1]),p[2]+t*(q[2]-p[2]),nx/L,ny/L,nz/L]};
+  const put=p=>{pos.push(p[0],p[1],p[2]);nor.push(p[3],p[4],p[5]);const o=ob(p[0],p[1],p[2]),C=pal[part(o[0],o[1],o[2],o[3])];col.push(C.r,C.g,C.b)};
+  const tri=(a,b,c)=>{const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    const d=(uy*vz-uz*vy)*a[3]+(uz*vx-ux*vz)*a[4]+(ux*vy-uy*vx)*a[5];put(a);if(d<0){put(c);put(b)}else{put(b);put(c)}};
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++)for(let k=0;k<N;k++){
+    let mn=Infinity,mx=-Infinity;
+    for(let c=0;c<8;c++){const o=OFF[c],v=F[id(i+o[0],j+o[1],k+o[2])];V[c]=v;if(v<mn)mn=v;if(v>mx)mx=v}
+    if(mn>=0||mx<0)continue;
+    for(let c=0;c<8;c++){const o=OFF[c],I=i+o[0],J=j+o[1],K=k+o[2];P[c]=[-B+I*dx,-B+J*dx,-B+K*dx];G[c]=[gn(I,J,K,0),gn(I,J,K,1),gn(I,J,K,2)]}
+    for(const T of TETS){
+      inn.length=0;out.length=0;for(const t of T)(V[t]<0?inn:out).push(t);
+      if(!inn.length||!out.length)continue;
+      if(inn.length===1)tri(ip(inn[0],out[0]),ip(inn[0],out[1]),ip(inn[0],out[2]));
+      else if(inn.length===3)tri(ip(out[0],inn[0]),ip(out[0],inn[1]),ip(out[0],inn[2]));
+      else{const a=ip(inn[0],out[0]),b=ip(inn[0],out[1]),c=ip(inn[1],out[1]),d=ip(inn[1],out[0]);tri(a,b,c);tri(a,c,d)}
+    }
+  }
+  return {pos,col,nor,lin:[],plate:S.plate?S.plate(h):(pos.length?`<b>${S.name}</b>の断面`:'断面：<b>なし</b>')};
+}
+
+// ---- 訓練室 ----
+const norm=v=>{const L=hyp(...v);return v.map(x=>x/L)};
+const BEH={
+  c_same_circle:'同じ大きさの円がずっと続く',
+  c_circle_grow:'円が点から大きくなり、小さくなって消える',
+  c_rect_width:'高さは一定で、幅だけ狭い→広い→狭いと変わる長方形',
+  c_same_square:'同じ大きさの正方形がずっと続く',
+  c_tri_hex:'三角形→六角形→三角形と形が変わる',
+  c_circle_shrink:'大きな円が突然現れ、だんだん小さくなって点で消える',
+  b_sphere_grow:'球が点から膨らみ、縮んで消える',
+  b_same_sphere:'同じ大きさの球がずっと続く',
+  b_cyl_thick:'長さは一定で、太さだけ細い→太い→細いと変わる円柱',
+  b_cyl_tall:'太さは一定で、高さだけ低い→高い→低いと変わる円柱',
+  b_same_cyl:'同じ円柱がずっと続く',
+  b_box_one:'1辺だけ伸び縮みし、残りの2辺は一定の箱',
+  b_same_cube:'同じ立方体がずっと続く',
+  b_tet_oct:'四面体→正八面体→四面体と形が変わる'
+};
+const circ=(y,n=32)=>Array.from({length:n},(_,i)=>{const t=i/n*2*Math.PI;return [Math.cos(t),y,Math.sin(t)]});
+const S3={
+  ball:{name:'球',g:(x,y,z)=>hyp(x,y,z)-1,part:()=>0,cols:['#5aa9e8'],geo:()=>new THREE.SphereGeometry(1,48,32),
+    pts:Array.from({length:400},(_,i)=>{const y=1-2*(i+.5)/400,r=Math.sqrt(1-y*y),t=i*2.39996;return [r*Math.cos(t),y,r*Math.sin(t)]})},
+  cyl:{name:'円柱',g:(x,y,z)=>Math.max(hyp(x,z)-1,abs(y)-1),part:(x,y,z)=>hyp(x,z)-1>abs(y)-1?0:1,cols:['#e8705a','#f2c14e'],
+    geo:()=>new THREE.CylinderGeometry(1,1,2,48),pts:[...circ(1),...circ(-1)]},
+  cube:{name:'立方体',g:(x,y,z)=>Math.max(abs(x),abs(y),abs(z))-1,part:(x,y,z)=>{const a=abs(x),b=abs(y),c=abs(z);return a>=b&&a>=c?0:b>=c?1:2},
+    cols:['#e8705a','#f2c14e','#5aa9e8'],geo:()=>new THREE.BoxGeometry(2,2,2),pts:[0,1,2,3,4,5,6,7].map(i=>[i&1?1:-1,i&2?1:-1,i&4?1:-1])},
+  cone:{name:'円錐',g:(x,y,z)=>Math.max(hyp(x,z)-(1-y)/2,abs(y)-1),part:(x,y,z)=>hyp(x,z)-(1-y)/2>abs(y)-1?0:1,cols:['#6fd0a0','#f2c14e'],
+    geo:()=>new THREE.ConeGeometry(1,2,48),pts:[[0,1,0],...circ(-1)]}
+};
+const SH4=Object.fromEntries(SHAPES.map(S=>[S.id,S]));
+const CASES0=[
+  {id:'ball0',s:'ball',vl:'どこからでも',n:[0,1,0],b:'c_circle_grow',why:'球はどの向きから切っても同じです。円が点から現れて、真ん中で一番大きくなります。'},
+  {id:'cyl0',s:'cyl',vl:'ふたの向き',n:[0,1,0],b:'c_same_circle',why:'線分（高さ）の側を切っているので、円がそのまま続きます。'},
+  {id:'cyl1',s:'cyl',vl:'横向き',n:[1,0,0],b:'c_rect_width',why:'円の側を切っているので円が線分になり、その長さ＝幅が変わります。高さ（線分の側）はそのままです。'},
+  {id:'cube0',s:'cube',vl:'面から',n:[0,1,0],b:'c_same_square',why:'面に平行に切るので、正方形がそのまま続きます。'},
+  {id:'cube1',s:'cube',vl:'辺から',n:norm([1,1,0]),b:'c_rect_width',why:'正方形の側を対角線の向きに切るので幅が変わり、残りの辺（高さ）はそのままです。'},
+  {id:'cube2',s:'cube',vl:'頂点から',n:norm([1,1,1]),b:'c_tri_hex',why:'角から入るので小さな三角形から始まり、真ん中では角が削れて六角形になります。'},
+  {id:'cone0',s:'cone',vl:'底から先へ',n:[0,1,0],b:'c_circle_shrink',why:'底の円から入り、とがった先に向かって細くなります。'}
+];
+const CASES1=[
+  {id:'glome0',s:'glome',v:0,b:'b_sphere_grow',why:'超球はどの向きでも同じです。球が点から現れて、真ん中で一番大きくなります（円の1つ上の版）。'},
+  {id:'glome1',s:'glome',v:1,b:'b_sphere_grow',why:'ななめに回しても超球は同じです。断面はいつも球です。'},
+  {id:'sph0',s:'spherinder',v:0,b:'b_same_sphere',why:'線分（W）の側を切っているので、球がそのまま続きます。円柱を「ふたの向き」で切るのと同じです。'},
+  {id:'sph1',s:'spherinder',v:1,b:'b_cyl_thick',why:'球の側を切っているので球が円板になり、その大きさ＝太さが変わります。線分の側（長さ）はそのままです。'},
+  {id:'cub0',s:'cubinder',v:0,b:'b_same_cyl',why:'線分（W）の側を切っているので、残りの「円板×線分」＝円柱がそのまま続きます。'},
+  {id:'cub1',s:'cubinder',v:1,b:'b_box_one',why:'円板の側を切っているので円板が線分になり、その1辺だけが伸び縮みします。正方形の側（2辺）はそのままです。'},
+  {id:'cub2',s:'cubinder',v:2,b:'b_cyl_tall',why:'正方形を対角に切ると線分の長さが変わり、それが円柱の高さになります。円板の側（太さ）はそのままです。'},
+  {id:'duo0',s:'duocylinder',v:0,b:'b_cyl_tall',why:'ZW の円板を切るので、線分の長さ＝高さが変わります。XY の円板（太さ）はそのままです。'},
+  {id:'tes0',s:'tesseract',v:0,b:'b_same_cube',why:'線分（W）の側を切っているので、立方体がそのまま続きます。'},
+  {id:'tes3',s:'tesseract',v:3,b:'b_tet_oct',why:'頂点から入るので四面体から始まり、真ん中で正八面体になります。立方体を角から切ると三角形→六角形になるのの1つ上の版です。'}
+];
+const STAGES=[
+  {name:'段階0',sub:'3次元で準備運動',cases:CASES0,kind:'fwd3'},
+  {name:'段階1',sub:'4次元の断面を予想',cases:CASES1,kind:'fwd4'},
+  {name:'段階2',sub:'動きから形を当てる',cases:CASES1,kind:'rev4'}
+];
+const label4=c=>`${SH4[c.s].name}・${SH4[c.s].views[c.v].l}`;
+
+// 保存
+const KEY='train4d-v1';
+let save={passed:[false,false,false],best:[0,0,0],wrong:[[],[],[]]};
+try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.passed)save=v}catch(e){}
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}};
+
+// 画面
+const plate=$('plate'),insetBox=$('insetBox'),c2=$('slice2d');
+function clearGrp(){for(const o of [...grp.children]){grp.remove(o);o.geometry&&o.geometry.dispose()}}
+const objMat=new THREE.MeshStandardMaterial({color:0x8fa6e0,transparent:true,opacity:0.32,depthWrite:false,side:THREE.DoubleSide,roughness:0.6});
+const planeMat=new THREE.MeshBasicMaterial({color:0xf2c14e,transparent:true,opacity:0.28,side:THREE.DoubleSide,depthWrite:false});
+const lineMat2=new THREE.LineBasicMaterial({color:0xc8d2f0,transparent:true,opacity:0.5});
+
+function range3(S,n){let lo=Infinity,hi=-Infinity;for(const p of S.pts){const d=p[0]*n[0]+p[1]*n[1]+p[2]*n[2];if(d<lo)lo=d;if(d>hi)hi=d}return [lo,hi]}
+function draw3(c,t,reveal){
+  const S=S3[c.s];clearGrp();
+  const geo=S.geo();const m=new THREE.Mesh(geo,objMat);grp.add(m);
+  grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),lineMat2));
+  const [lo,hi]=range3(S,c.n),s=lo+(hi-lo)*(reveal?t:0.02);
+  const pg=new THREE.PlaneGeometry(3.4,3.4),pm=new THREE.Mesh(pg,planeMat);
+  pm.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(...c.n));
+  pm.position.set(c.n[0]*s,c.n[1]*s,c.n[2]*s);grp.add(pm);
+  const x=c2.getContext('2d'),W=c2.width,H=c2.height;x.clearRect(0,0,W,H);
+  if(!reveal){x.fillStyle='#a4abc6';x.font='bold 56px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('?',W/2,H/2);return}
+  const n=c.n,a=norm(cross(n,abs(n[0])<0.9?[1,0,0]:[0,0,1])),b=cross(n,a);
+  const R=100,img=x.createImageData(R,R),L=1.9,cols=S.cols.map(h=>new THREE.Color(h));
+  for(let i=0;i<R;i++)for(let j=0;j<R;j++){const u=-L+2*L*(i+.5)/R,v=L-2*L*(j+.5)/R;
+    const p=[0,1,2].map(k=>n[k]*s+a[k]*u+b[k]*v);
+    if(S.g(...p)<0){const C=cols[S.part(...p)],q=(j*R+i)*4;img.data[q]=C.r*255;img.data[q+1]=C.g*255;img.data[q+2]=C.b*255;img.data[q+3]=255}}
+  const tmp=document.createElement('canvas');tmp.width=R;tmp.height=R;tmp.getContext('2d').putImageData(img,0,0);
+  x.imageSmoothingEnabled=false;x.drawImage(tmp,0,0,W,H);
+  x.strokeStyle='rgba(164,171,198,.35)';x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.moveTo(0,H/2);x.lineTo(W,H/2);x.stroke();
+}
+const NEUTRAL=new THREE.Color('#9fb4ea');
+function draw4(c,t,{solidOn,neutral,ghostOn}){
+  const S=SH4[c.s];view=c.v;st.xw=st.yw=st.zw=0;base=S.views[c.v].M();
+  const M=base,sp=S.supp(M[3]);
+  const h=S.poly?-sp+2*sp*(t*0.9995+0.00025):-sp+2*sp*t;
+  clearGrp();
+  if(solidOn){
+    const r=S.poly?buildPoly(M,h):buildImp(S,M,h,40);
+    if(neutral)for(let i=0;i<r.col.length;i+=3){r.col[i]=NEUTRAL.r;r.col[i+1]=NEUTRAL.g;r.col[i+2]=NEUTRAL.b}
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(r.pos,3));
+    g.setAttribute('color',new THREE.Float32BufferAttribute(r.col,3));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(r.nor,3));
+    grp.add(new THREE.Mesh(g,solidMat));
+    const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(r.lin,3));
+    grp.add(new THREE.LineSegments(lg,lineMat));
+  }
+  if(ghostOn){
+    const gp=[],gc=[],span=2*sp;
+    S.lines.forEach(L=>{for(let i=0;i<L.length-1;i++)[L[i],L[i+1]].forEach(v=>{const p=mv(M,v);gp.push(p[0],p[1],p[2]);const f=solidOn?Math.max(0.1,1-1.6*abs(p[3]-h)/span):0.45;gc.push(0.55*f,0.65*f,f)})});
+    const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gp,3));gg.setAttribute('color',new THREE.Float32BufferAttribute(gc,3));
+    grp.add(new THREE.LineSegments(gg,ghostMat));
+  }
+}
+
+// 出題
+let stg=0,queue=[],qi=0,correct=0,times=[],wrongNow=[],cur0=null,answered=false,shownAt=0;
+const anim={on:false,t:0,pause:0};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function makeQueue(){
+  const C=STAGES[stg].cases,byId=Object.fromEntries(C.map(c=>[c.id,c]));
+  const q=save.wrong[stg].map(id=>byId[id]).filter(Boolean);
+  while(q.length<10){for(const c of shuffle(C)){if(q.length>=10)break;if(q[q.length-1]!==c)q.push(c)}}
+  return q.slice(0,10);
+}
+function renderTabs(){
+  $('tabs').innerHTML=STAGES.map((S,i)=>`<button data-i="${i}" aria-pressed="${i===stg}"><b>${S.name}</b><small>${save.passed[i]?'合格':S.sub}</small></button>`).join('');
+  const locked=stg>0&&!save.passed[stg-1];
+  $('stageNote').textContent=STAGES[stg].sub+'。'+(locked?'前の段階にまだ合格していませんが、挑戦はできます。':'')+(save.best[stg]?` これまでの最高は10問中${save.best[stg]}問です。`:'');
+}
+function startStage(i){stg=i;queue=makeQueue();qi=0;correct=0;times=[];wrongNow=[];$('quiz').hidden=false;$('result').hidden=true;renderTabs();ask()}
+function ask(){
+  const c=queue[qi],kind=STAGES[stg].kind;cur0=c;answered=false;anim.on=false;anim.t=0;
+  $('prog').textContent=`${qi+1} / 10問`;$('score').textContent=`正解 ${correct}`;
+  $('fb').hidden=true;$('next').hidden=true;
+  insetBox.hidden=kind!=='fwd3';
+  let opts;
+  if(kind==='fwd3'){
+    $('prompt').textContent=`${S3[c.s].name}を「${c.vl}」の向きの平面で、端から端まで切っていきます。切り口はどう変わる？`;
+    opts=pickOpts(c,CASES0.map(x=>x.b),x=>x,b=>BEH[b]);draw3(c,0,false);plate.innerHTML='予想してから選んでください';
+  }else if(kind==='fwd4'){
+    $('prompt').textContent=`${SH4[c.s].name}を「${SH4[c.s].views[c.v].l}」で、W の下端から上端まで切っていきます。断面はどう変わる？`;
+    opts=pickOpts(c,CASES1.map(x=>x.b),x=>x,b=>BEH[b]);draw4(c,0,{solidOn:false,ghostOn:true});plate.innerHTML='細い線は4次元の影。予想してから選んでください';
+  }else{
+    $('prompt').textContent='この断面の動きは、どの形をどの向きで切ったもの？';
+    const others=shuffle(CASES1.filter(x=>x.b!==c.b));const pick=[];
+    for(const x of others){if(pick.length>=3)break;if(!pick.some(p=>p.b===x.b))pick.push(x)}
+    opts=shuffle([c,...pick]).map(x=>({key:x.id,text:label4(x),ok:x===c}));
+    anim.on=true;plate.innerHTML='色を消した断面の動きです';
+  }
+  $('opts').innerHTML=opts.map((o,i)=>`<button data-k="${o.key}" data-ok="${o.ok}">${o.text}</button>`).join('');
+  shownAt=performance.now();
+}
+function pickOpts(c,pool,id,txt){
+  const others=shuffle([...new Set(pool)].filter(b=>b!==c.b)).slice(0,3);
+  return shuffle([c.b,...others]).map(b=>({key:b,text:txt(b),ok:b===c.b}));
+}
+$('opts').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||answered)return;answered=true;
+  const ok=b.dataset.ok==='true',c=cur0,kind=STAGES[stg].kind;
+  times.push((performance.now()-shownAt)/1000);
+  if(ok)correct++;else wrongNow.push(c.id);
+  for(const x of $('opts').children){x.disabled=false;x.classList.add(x.dataset.ok==='true'?'right':(x===b?'wrong':'dim'))}
+  const fb=$('fb');fb.hidden=false;fb.className='fb '+(ok?'ok':'ng');
+  const ans=kind==='fwd3'?BEH[c.b]:kind==='fwd4'?BEH[c.b]:`${label4(c)}（${BEH[c.b]}）`;
+  fb.innerHTML=`<b>${ok?'正解':'ちがいます'}</b><span>答え：${ans}</span><span>${c.why}</span>`;
+  $('score').textContent=`正解 ${correct}`;
+  $('next').hidden=false;$('next').textContent=qi<9?'次の問題':'結果を見る';
+  anim.on=true;anim.t=0;anim.pause=0;
+  plate.innerHTML=kind==='fwd3'?`<b>${S3[c.s].name}</b>・${c.vl}`:`<b>${SH4[c.s].name}</b>・${SH4[c.s].views[c.v].l}`;
+  $('next').focus();
+});
+$('next').addEventListener('click',()=>{if(qi<9){qi++;ask()}else finish()});
+function finish(){
+  anim.on=false;$('quiz').hidden=true;$('result').hidden=false;
+  const pass=correct>=8,avg=times.reduce((s,x)=>s+x,0)/times.length;
+  if(pass)save.passed[stg]=true;save.best[stg]=Math.max(save.best[stg],correct);save.wrong[stg]=[...new Set(wrongNow)];persist();
+  $('resTitle').textContent=`10問中 ${correct}問正解${pass?'　合格':''}`;
+  $('resBody').textContent=`1問あたり平均 ${avg.toFixed(1)}秒。`+(wrongNow.length?`間違えた${new Set(wrongNow).size}種類の問題は、次の回の最初にもう一度出します。`:'全問正解です。')+(pass?'':'8問正解で合格です。');
+  $('nextStage').hidden=stg>=2;renderTabs();
+}
+$('again').addEventListener('click',()=>startStage(stg));
+$('nextStage').addEventListener('click',()=>startStage(Math.min(2,stg+1)));
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)startStage(+b.dataset.i)});
+
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;grp.rotation.y+=(e.clientX-drag.x)*0.01;grp.rotation.x=Math.max(-1.4,Math.min(1.4,grp.rotation.x+(e.clientY-drag.y)*0.01));drag={x:e.clientX,y:e.clientY}});
+cv.addEventListener('pointerup',()=>drag=null);cv.addEventListener('pointercancel',()=>drag=null);
+
+let last=performance.now();
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000);last=t;
+  if(anim.on&&cur0){
+    if(anim.pause>0)anim.pause-=dt;
+    else{anim.t+=dt/4.5;if(anim.t>=1){anim.t=0;anim.pause=0.8}}
+    const kind=STAGES[stg].kind;
+    if(kind==='fwd3')draw3(cur0,anim.t,true);
+    else draw4(cur0,anim.pause>0?0:anim.t,{solidOn:anim.pause<=0,neutral:kind==='rev4'&&!answered,ghostOn:kind!=='rev4'||answered});
+  }
+  renderer.render(scene,cam);requestAnimationFrame(loop);
+}
+resize();startStage(save.passed[1]?2:save.passed[0]?1:0);requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
